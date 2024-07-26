@@ -38,18 +38,18 @@ int main() {
     }
 
     // Get player's name
-    string playerName;
+    string pName;
     cout << "Enter player's name: ";
-    getline(cin, playerName);                          // Read player's name
+    getline(cin, pName);                          // Read player's name
 
     // Initial Card Dealing
     int pc1val = getCardValue();                       // Get first card value for player
     string pc1vst = getCardSuit();                     // Get first card suit for player
-    updateFile(outFile, playerName, pc1val, pc1vst);   // Update file with player's first card details
+    updateFile(outFile, pName, pc1val, pc1vst);   // Update file with player's first card details
 
     int pc2val = getCardValue();                       // Get second card value for player
     string pc2vst = getCardSuit();                     // Get second card suit for player
-    updateFile(outFile, playerName, pc2val, pc2vst);   // Update file with player's second card details
+    updateFile(outFile, pName, pc2val, pc2vst);   // Update file with player's second card details
 
     int dc1val = getCardValue();                       // Get first card value for dealer
     string dc1vst = getCardSuit();                     // Get first card suit for dealer
@@ -60,14 +60,14 @@ int main() {
     updateFile(outFile, "Dealer", dc2val, dc2vst);     // Update file with dealer's second card details
 
     // Display Initial Hands
-    cout << playerName << "'s Hand: " << pc1val << " of " << pc1vst << ", " << pc2val << " of " << pc2vst << endl;
+    cout << pName << "'s Hand: " << pc1val << " of " << pc1vst << ", " << pc2val << " of " << pc2vst << endl;
     cout << "Dealer's Hand: " << dc1val << " of " << dc1vst << ", " << dc2val << " of " << dc2vst << endl;
 
     // Player's Turn Logic
     char choice;                                      // Variable to store player's choice
     int pTotal = pc1val + pc2val;                     // Calculate player's initial total score
     do {
-        cout << playerName << "'s total: " << pTotal << endl;
+        cout << pName << "'s total: " << pTotal << endl;
         cout << "Do you want to hit (h/H) or stand (s/S)? ";
         cin >> choice;                                // Get player's choice
 
@@ -79,12 +79,12 @@ int main() {
 
             pTotal += nCValue;                        // Update player's total score
             cout << "You got " << nCValue << " of " << nCSuit << endl;
-            updateFile(outFile, playerName, nCValue, nCSuit);   // Update file with new card details
+            updateFile(outFile, pName, nCValue, nCSuit);   // Update file with new card details
 
             if (pTotal > MAX_SCORE) {                 // If player's total exceeds MAX_SCORE
-                cout << playerName << " busts with total: " << pTotal << endl;
+                cout << pName << " busts with total: " << pTotal << endl;
                 outFile.close();                      // Close the output file
-                recordWinner(outFile, playerName, "Dealer");    // Record dealer as winner
+                recordWinner(outFile, pName, "Dealer");    // Record dealer as winner
                 return 0;                             // Exit the program
             }
         }
@@ -104,21 +104,21 @@ int main() {
     cout << "Dealer's total: " << dTotal << endl;
 
     // Determine Winner
-    int pAbsTotal = abs(pTotal - MAX_SCORE);          // Calculate absolute difference from MAX_SCORE for player
-    int dAbsTotal = abs(dTotal - MAX_SCORE);          // Calculate absolute difference from MAX_SCORE for dealer
+    int pAbstot = abs(pTotal - MAX_SCORE);          // Calculate absolute difference from MAX_SCORE for player
+    int dAbstot = abs(dTotal - MAX_SCORE);          // Calculate absolute difference from MAX_SCORE for dealer
 
-    cout << playerName << "'s absolute difference from 21: " << pAbsTotal << endl;
-    cout << "Dealer's absolute difference from 21: " << dAbsTotal << endl;
+    cout << pName << "'s absolute difference from 21: " << pAbstot << endl;
+    cout << "Dealer's absolute difference from 21: " << dAbstot << endl;
 
     if (dTotal > MAX_SCORE || pTotal > dTotal) {      // Determine winner based on scores
-        cout << playerName << " wins!" << endl;
-        recordWinner(outFile, playerName, playerName); // Record player as winner
+        cout << pName << " wins!" << endl;
+        recordWinner(outFile, pName, pName); // Record player as winner
     } else if (dTotal > pTotal) {
         cout << "Dealer wins!" << endl;
-        recordWinner(outFile, playerName, "Dealer");  // Record dealer as winner
+        recordWinner(outFile, pName, "Dealer");  // Record dealer as winner
     } else {
         cout << "It's a tie!" << endl;
-        recordWinner(outFile, playerName, "Tie");     // Record a tie
+        recordWinner(outFile, pName, "Tie");     // Record a tie
     }
 
     outFile.close();                                  // Close the output file
