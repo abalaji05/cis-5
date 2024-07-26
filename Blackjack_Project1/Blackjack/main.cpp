@@ -11,6 +11,7 @@
 #include <string>
 #include <fstream>
 #include <limits>
+#include <cmath>
 using namespace std;
 
 // Named Constants
