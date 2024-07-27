@@ -231,3 +231,6 @@ string getCardSuit() {
     return "";
 }
 
+void updateFile(ofstream &file, string plyr, int val) {
+    file << plyr << ": " << val << " of " << "Unknown Suit" << endl;
+}
