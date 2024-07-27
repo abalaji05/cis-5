@@ -207,3 +207,27 @@ void exitFunction(const string& message) {
     exit(1);
 }
 
+int getCardValue() {
+    static int cardCount = 0;        // Static variable to keep track of the number of cards dealt
+    cardCount++;
+    cout << "Card Count: " << cardCount << endl;
+    int crd = rand() % 13 + 1;
+    if (crd > 10) return 10;
+    if (crd == 1) return 11;
+    return crd;
+}
+
+string getCardSuit() {
+    static int suitCount = 0;        // Static variable to keep track of the number of suits dealt
+    suitCount++;
+    cout << "Suit Count: " << suitCount << endl;
+    int sut = rand() % 4;
+    switch (sut) {
+        case 0: return "Hearts";
+        case 1: return "Diamonds";
+        case 2: return "Clubs";
+        case 3: return "Spades";
+    }
+    return "";
+}
+
