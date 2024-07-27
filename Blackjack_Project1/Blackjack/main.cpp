@@ -1,8 +1,9 @@
-/*
+/* 
+ * File:   main.cpp
  * Author: Akshay Balaji
- * Created on 7/21/2024
- * Updated on 7/26/2024
- * Purpose: Enhanced Blackjack game with betting, multiple players, and better output
+ * Created: 7/21/2024
+ * Purpose:  Blackjack game
+ * 
  */
 
 // System Libraries
@@ -12,173 +13,226 @@
 #include <string>
 #include <fstream>
 #include <limits>
-#include <cmath>
-#include <vector>
-#include <map>
 using namespace std;
 
-// Named Constants
+//User Libraries
+
+//Global Constants, no Global Variables are allowed
+//Math/Physics/Conversions/Higher Dimensions - i.e. PI, e, etc...
 const int MAX_SCORE = 21;
-const int DEALER_HIT_LIMIT = 17;
+const int DEALER_LIMIT = 17;
 const int MIN_PLAYERS = 1;
 const int MAX_PLAYERS = 8;
 
 // Function Prototypes
-int getCardValue(void);    // Get a random card value
-string getCardSuit(void);  // Get a random card suit
-void updateFile(ofstream&, string, int, string = "Unknown Suit");    // Update file with card details
-void updateFile(ofstream&, string, int);                             // Overloaded function to update file with card details
-void recordWinner(ofstream&, string, string);    // Record the winner in the file
-void validateInput(char&);    // Validate user input for hit or stand
-void validateBetInput(int&);    // Validate bet input
-void displayLeaderboard(const map<string, int>&, int);    // Display the leaderboard
-void exitFunction(const string& message);    // Exit function with a message
+int getCard();          // Get a random card value
+string getSuit();       // Get a random card suit
+void updFile(ofstream&, string, int, string = "Unknown"); // Update file with card details
+void updHand(string[], int,  int, string);
+void recWin(ofstream&, string[], string[], int, string); // Record the winner in the file
+void valInput(char&);    // Validate user input for hit or stand
+void valBet(int&);       // Validate bet input
+void showLead(string[], int[], int); // Display the leaderboard
+void exitMsg(const string& msg); // Exit function with a message
 
+//Execution Begins Here!
 int main() {
-    // Seed random number generator
+    // Declare Variables
+    int numPlyrs;
+    string pNames[MAX_PLAYERS];
+    int plyrBts[MAX_PLAYERS];
+    int plyrBlns[MAX_PLAYERS] = {0}; // Player balances initialized to 0
+    int ttlWngs[MAX_PLAYERS + 1] = {0}; // Total winnings (last index for dealer)
+    string winners[MAX_PLAYERS + 1]; // Names of winners
+
+    int plyrTls[MAX_PLAYERS] = {0};
+    int dlrTtl;
+
+    int dlrCrd1, dlrCrd2;
+    string dlrSut1, dlrSut2;
+    
+    static string hands[MAX_PLAYERS + 1]; // +1 for the dealer
+
     srand(static_cast<unsigned int>(time(0)));
 
-    // Variables for file I/O
     ofstream outFile("card.dat", ios::app);
     if (!outFile.is_open()) {
-        exitFunction("Error opening file!");    // Exit if file cannot be opened
+        exitMsg("Error opening file!");
     }
 
-    // Input: Number of players
-    int numPlyrs;
-    cout << "Enter number of players (1-8): ";
-    cin >> numPlyrs;
-    while (numPlyrs < MIN_PLAYERS || numPlyrs > MAX_PLAYERS) {
-        cout << "Invalid number of players. Enter a number between 1 and 8: ";
+    while (true) {
+        cout << "Enter number of players (1-8): ";
         cin >> numPlyrs;
+        
+        // Check if the input is an integer
+        if (cin.fail()) {
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout << "Invalid input. Please enter a number between 1 and 8." << endl;
+        } else if (numPlyrs < MIN_PLAYERS || numPlyrs > MAX_PLAYERS) {
+            cout << "Invalid number of players. Enter a number between 1 and 8." << endl;
+        } else {
+            break;  // Valid input
+        }
     }
-
-    // Input: Player names and bets
-    string plyrNms[MAX_PLAYERS];
-    int plyrBts[MAX_PLAYERS];
-    int plyrBlncs[MAX_PLAYERS] = {0};    // Player balances initialized to 0
-    map<string, int> ttlWnngs;    // Total winnings
-
+    
     for (int i = 0; i < numPlyrs; ++i) {
         cout << "Enter player " << i + 1 << "'s name: ";
         cin.ignore();
-        getline(cin, plyrNms[i]);
-        cout << "Enter bet amount for " << plyrNms[i] << ": ";
+        getline(cin, pNames[i]);
+        cout << "Enter bet amount for " << pNames[i] << ": ";
         cin >> plyrBts[i];
-        validateBetInput(plyrBts[i]);
+        valBet(plyrBts[i]);
+        
+        hands[i] = "";
     }
-
-    // Initial card dealing
-    int plyrTtls[MAX_PLAYERS] = {0};
+    
     for (int i = 0; i < numPlyrs; ++i) {
-        int crd1 = getCardValue();
-        string sut1 = getCardSuit();
-        updateFile(outFile, plyrNms[i], crd1, sut1);
-
-        int crd2 = getCardValue();
-        string sut2 = getCardSuit();
-        updateFile(outFile, plyrNms[i], crd2, sut2);
-
-        plyrTtls[i] = crd1 + crd2;
-        cout << plyrNms[i] << "'s Hand: " << crd1 << " of " << sut1 << ", " << crd2 << " of " << sut2 << endl;
+        // Deal two cards to each player
+        for (int j = 0; j < 2; ++j) {
+            int crd = getCard();
+            string sut = getSuit();
+           
+            updHand(hands, i, crd, sut);
+            plyrTls[i] += crd; // Sum the card values for the player's total
+        }
+        cout << pNames[i] << "'s Hand : " << hands[i] << endl;
     }
+
 
     // Initial card dealing for the dealer
-    int dlrCrd1 = getCardValue();
-    string dlrSut1 = getCardSuit();
-    updateFile(outFile, "Dealer", dlrCrd1, dlrSut1);
+    dlrCrd1 = getCard();
+    dlrSut1 = getSuit();
+    updHand(hands, numPlyrs, dlrCrd1, dlrSut1);
 
-    int dlrCrd2 = getCardValue();
-    string dlrSut2 = getCardSuit();
-    updateFile(outFile, "Dealer", dlrCrd2, dlrSut2);
+    dlrCrd2 = getCard();
+    dlrSut2 = getSuit();
+    updHand(hands, numPlyrs, dlrCrd2, dlrSut2);
 
-    int dlrTtl = dlrCrd1 + dlrCrd2;
-    cout << "Dealer's Hand: " << dlrCrd1 << " of " << dlrSut1 << ", " << dlrCrd2 << " of " << dlrSut2 << endl;
+    dlrTtl = dlrCrd1 + dlrCrd2;
+    cout << "Dealer's Hand: " << hands[numPlyrs] << endl;
 
     // Player's Turn: Each player can hit or stand
     for (int i = 0; i < numPlyrs; ++i) {
         char choice;
         do {
-            cout << plyrNms[i] << "'s total: " << plyrTtls[i] << endl;
+            cout << pNames[i] << "'s total: " << plyrTls[i] << endl;
             cout << "Do you want to hit (h/H) or stand (s/S)? ";
             cin >> choice;
-            validateInput(choice);
+            valInput(choice);
 
             if (choice == 'h' || choice == 'H') {
-                int newCrd = getCardValue();
-                string newSut = getCardSuit();
-                plyrTtls[i] += newCrd;
+                int newCrd = getCard();
+                string newSut = getSuit();
+                plyrTls[i] += newCrd;
                 cout << "You got " << newCrd << " of " << newSut << endl;
-                updateFile(outFile, plyrNms[i], newCrd, newSut);
+                updHand(hands, i, newCrd, newSut);
 
-                if (plyrTtls[i] > MAX_SCORE) {
-                    cout << plyrNms[i] << " busts with total: " << plyrTtls[i] << endl;
+                if (plyrTls[i] > MAX_SCORE) {
+                    cout << pNames[i] << " busts with total: " << plyrTls[i] << endl;
                     break;
                 }
             }
         } while (choice == 'h' || choice == 'H');
     }
 
-    // Dealer's Turn: Dealer hits until reaching DEALER_HIT_LIMIT
-    while (dlrTtl < DEALER_HIT_LIMIT) {
-        int newCrd = getCardValue();
-        string newSut = getCardSuit();
+    // Dealer's Turn: Dealer hits until reaching DEALER_LIMIT
+    while (dlrTtl < DEALER_LIMIT) {
+        int newCrd = getCard();
+        string newSut = getSuit();
         dlrTtl += newCrd;
         cout << "Dealer got " << newCrd << " of " << newSut << endl;
-        updateFile(outFile, "Dealer", newCrd, newSut);
+        updHand(hands, numPlyrs, newCrd, newSut);
     }
 
     cout << "Dealer's total: " << dlrTtl << endl;
 
+    string bstPlyr = "";
+    int bstTotl = 0;
+
     // Determine winners
     for (int i = 0; i < numPlyrs; ++i) {
-        int plyrDiff = abs(plyrTtls[i] - MAX_SCORE);
-        int dlrDiff = abs(dlrTtl - MAX_SCORE);
+        int plyrDif = abs(plyrTls[i] - MAX_SCORE);
+        int dlrDif = abs(dlrTtl - MAX_SCORE);
 
-        cout << plyrNms[i] << "'s absolute difference from 21: " << plyrDiff << endl;
-        cout << "Dealer's absolute difference from 21: " << dlrDiff << endl;
+        //cout << pNames[i] << "'s abs diff from 21: " << plyrDif << endl;
+        //cout << "Dealer's abs diff from 21: " << dlrDif << endl;
 
-        if (plyrTtls[i] > MAX_SCORE) {
-            cout << plyrNms[i] << " busts and cannot win!" << endl;
-            ttlWnngs["Dealer"] += plyrBts[i];
-        } else if (dlrTtl > MAX_SCORE || plyrTtls[i] > dlrTtl) {
-            cout << plyrNms[i] << " wins!" << endl;
-            recordWinner(outFile, plyrNms[i], plyrNms[i]);
-            ttlWnngs[plyrNms[i]] += plyrBts[i] * (numPlyrs + 1); // Player gains bets from all players and dealer
-            plyrBlncs[i] += plyrBts[i] * numPlyrs; // Calculate player balance after win
-        } else if (dlrTtl > plyrTtls[i]) {
-            cout << "Dealer wins against " << plyrNms[i] << "!" << endl;
-            recordWinner(outFile, plyrNms[i], "Dealer");
-            ttlWnngs["Dealer"] += plyrBts[i];
-        } else {
-            cout << "It's a tie for " << plyrNms[i] << "!" << endl;
-            recordWinner(outFile, plyrNms[i], "Tie");
+        if (plyrTls[i] > MAX_SCORE) {
+            cout << pNames[i] << " busts and cannot win!" << endl;
+            ttlWngs[numPlyrs] += plyrBts[i]; // Dealer wins the bet
+            winners[numPlyrs] = "Dealer";
+        } 
+
+        else if (dlrTtl > MAX_SCORE || plyrTls[i] > dlrTtl) {
+            cout << pNames[i] << " wins!" << endl;
+            recWin(outFile, hands, pNames, i, pNames[i]);
+            ttlWngs[i] += plyrBts[i] * (numPlyrs + 1); // Player gains bets from all players and dealer
+            plyrBlns[i] += plyrBts[i] * numPlyrs; // Calculate player balance after win
+            winners[i] = pNames[i];
+            
+            if (plyrTls[i] > bstTotl) {
+                bstTotl = plyrTls[i];
+                bstPlyr = pNames[i];
+            }
+        } 
+
+        else if (dlrTtl > plyrTls[i]) {
+            cout << "Dealer wins against " << pNames[i] << "!" << endl;
+            recWin(outFile, hands, pNames, i, "Dealer");
+            ttlWngs[numPlyrs] += plyrBts[i]; // Dealer wins the bet
+            winners[numPlyrs] = "Dealer";
+        } 
+
+        else {
+            cout << "It's a tie for " << pNames[i] << "!" << endl;
+            recWin(outFile, hands, pNames, i, "Tie");
+            winners[i] = "Tie";
         }
+
+        if (bstTotl > 0)
+            cout << "Best Player : " << bstPlyr << " Score :" << bstTotl<<endl;
     }
 
+    // Record dealer's final hand
+    recWin(outFile, hands, pNames, numPlyrs, "Dealer");
+
+    // close the card.dat file
     outFile.close();
-    displayLeaderboard(ttlWnngs, numPlyrs);
+
+    // Show Leaderboard
+    showLead(winners, ttlWngs, numPlyrs);
 
     // Display player balances
     for (int i = 0; i < numPlyrs; ++i) {
-        cout << plyrNms[i] << "'s balance: " << plyrBlncs[i] << endl;
+        cout << pNames[i] << "'s bal: " << plyrBlns[i] << endl;
     }
 
     return 0;
 }
 
 // Get a random card value
-int getCardValue() {
-    int crd = rand() % 13 + 1;
-    if (crd > 10) return 10;
-    if (crd == 1) return 11;
-    return crd;
+int getCard() {
+
+    // get a random card
+    int card = rand() % 13 + 1;
+
+    // all face cards get value 10
+    if (card > 10) return 10;
+
+    // Ace gets value 11
+    if (card == 1) return 11;
+
+    // return card value otherwise
+    return card;
 }
 
 // Get a random card suit
-string getCardSuit() {
-    int sut = rand() % 4;
-    switch (sut) {
+string getSuit() {
+
+    // get a random suite
+    int suit = rand() % 4;
+    switch (suit) {
         case 0: return "Hearts";
         case 1: return "Diamonds";
         case 2: return "Clubs";
@@ -188,28 +242,34 @@ string getCardSuit() {
 }
 
 // Update file with card details
-void updateFile(ofstream &file, string plyr, int val, string sut) {
-    file << plyr << ": " << val << " of " << sut << endl;
-}
-
-// Overloaded function to update file with card details
-void updateFile(ofstream &file, string plyr, int val) {
-    file << plyr << ": " << val << " of " << "Unknown Suit" << endl;
+void updFile(ofstream &file, string plyr, int val, string suit) {
+    file << plyr << ": " << val << " of " << suit << endl;
 }
 
 // Record the winner in the file
-void recordWinner(ofstream &file, string plyr, string wnr) {
+void recWin(ofstream &file, string hands[], string pNames[], int idx, string wnr) {
     if (file.is_open()) {
-        file << "Winner: " << wnr << " (Player: " << plyr << ")" << endl;
+        // Write the accumulated hand for the player or dealer
+        if (idx < MAX_PLAYERS) {
+            file << pNames[idx] << ": " << hands[idx] << endl;
+        } else {
+            file << "Dealer: " << hands[idx] << endl;
+        }
+        file << "Winner: " << wnr << endl;
     } else {
         ofstream outFile("card.dat", ios::app);
-        outFile << "Winner: " << wnr << " (Player: " << plyr << ")" << endl;
+        if (idx < MAX_PLAYERS) {
+            outFile << pNames[idx] << ": " << hands[idx] << endl;
+        } else {
+            outFile << "Dealer: " << hands[idx] << endl;
+        }
+        outFile << "Winner: " << wnr << endl;
         outFile.close();
     }
 }
 
 // Validate user input for hit or stand
-void validateInput(char &choice) {
+void valInput(char &choice) {
     while (cin.fail() || (choice != 'h' && choice != 'H' && choice != 's' && choice != 'S')) {
         cin.clear();
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
@@ -218,8 +278,24 @@ void validateInput(char &choice) {
     }
 }
 
+// Update hands in array
+void updHand(string hands[], int idx, int crd, string suit) {
+    // Construct card detail string
+    
+    string cardDetail = to_string(crd) + " of " + suit;
+
+    // Update the hand in the array for display
+    if (hands[idx].empty()) {
+        hands[idx] = cardDetail;
+    } 
+    
+    else {
+        hands[idx] += ", " + cardDetail;
+    }
+}
+
 // Validate bet input
-void validateBetInput(int &bet) {
+void valBet(int &bet) {
     while (cin.fail() || bet <= 0) {
         cin.clear();
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
@@ -229,16 +305,18 @@ void validateBetInput(int &bet) {
 }
 
 // Display the leaderboard
-void displayLeaderboard(const map<string, int> &winnings, int numPlyrs) {
+void showLead(string winners[], int ttlWngs[], int numPlyrs) {
     cout << "\nLeaderboard:" << endl;
-    for (const auto &entry : winnings) {
-        cout << entry.first << ": " << entry.second << " points" << endl;
+    for (int i = 0; i <= numPlyrs; ++i) {
+        if (!winners[i].empty()) {
+            cout << winners[i] << ": " << ttlWngs[i] << " points" << endl;
+        }
     }
 }
 
 // Exit function with a message
-void exitFunction(const string& message) {
-    cout << message << endl;
+void exitMsg(const string& msg) {
+    cout << msg << endl;
     exit(1);
 }
 
