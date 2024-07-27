@@ -2,7 +2,7 @@
  * Author: Akshay Balaji
  * Created on 7/21/2024
  * Updated on 7/26/2024
- * Purpose: Enhanced Blackjack game with multiple players
+ * Purpose: Enhanced Blackjack game with multiple players, betting, and leaderboard
  */
 
 // System Libraries
@@ -13,6 +13,7 @@
 #include <fstream>
 #include <limits>
 #include <cmath>
+#include <map>
 using namespace std;
 
 // Named Constants
@@ -27,6 +28,8 @@ string getCardSuit(void);
 void updateFile(ofstream&, string, int, string);
 void recordWinner(ofstream&, string, string);
 void validateInput(char&);
+void validateBetInput(int&);
+void displayLeaderboard(const map<string, int>&);
 void exitFunction(const string& message);
 
 int main() {
@@ -46,11 +49,16 @@ int main() {
     }
 
     string plyrNms[MAX_PLAYERS];
+    int plyrBts[MAX_PLAYERS];
+    map<string, int> ttlWnngs;
 
     for (int i = 0; i < numPlyrs; ++i) {
         cout << "Enter player " << i + 1 << "'s name: ";
         cin.ignore();
         getline(cin, plyrNms[i]);
+        cout << "Enter bet amount for " << plyrNms[i] << ": ";
+        cin >> plyrBts[i];
+        validateBetInput(plyrBts[i]);
     }
 
     int plyrTtls[MAX_PLAYERS] = {0};
@@ -121,9 +129,11 @@ int main() {
         if (dlrTtl > MAX_SCORE || plyrTtls[i] > dlrTtl) {
             cout << plyrNms[i] << " wins!" << endl;
             recordWinner(outFile, plyrNms[i], plyrNms[i]);
+            ttlWnngs[plyrNms[i]] += plyrBts[i];
         } else if (dlrTtl > plyrTtls[i]) {
             cout << "Dealer wins against " << plyrNms[i] << "!" << endl;
             recordWinner(outFile, plyrNms[i], "Dealer");
+            ttlWnngs["Dealer"] += plyrBts[i];
         } else {
             cout << "It's a tie for " << plyrNms[i] << "!" << endl;
             recordWinner(outFile, plyrNms[i], "Tie");
@@ -131,6 +141,7 @@ int main() {
     }
 
     outFile.close();
+    displayLeaderboard(ttlWnngs);
     return 0;
 }
 
@@ -172,6 +183,22 @@ void validateInput(char &choice) {
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
         cout << "Invalid choice. Please enter 'h/H' to hit or 's/S' to stand: ";
         cin >> choice;
+    }
+}
+
+void validateBetInput(int &bet) {
+    while (cin.fail() || bet <= 0) {
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        cout << "Invalid bet amount. Please enter a positive number: ";
+        cin >> bet;
+    }
+}
+
+void displayLeaderboard(const map<string, int> &winnings) {
+    cout << "\nLeaderboard:" << endl;
+    for (const auto &entry : winnings) {
+        cout << entry.first << ": " << entry.second << " points" << endl;
     }
 }
 
