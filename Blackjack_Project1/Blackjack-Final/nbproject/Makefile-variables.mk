@@ -9,19 +9,19 @@ CND_DISTDIR=dist
 # Debug configuration
 CND_PLATFORM_Debug=GNU-Linux
 CND_ARTIFACT_DIR_Debug=dist/Debug/GNU-Linux
-CND_ARTIFACT_NAME_Debug=blackjack
-CND_ARTIFACT_PATH_Debug=dist/Debug/GNU-Linux/blackjack
+CND_ARTIFACT_NAME_Debug=blackjack-final
+CND_ARTIFACT_PATH_Debug=dist/Debug/GNU-Linux/blackjack-final
 CND_PACKAGE_DIR_Debug=dist/Debug/GNU-Linux/package
-CND_PACKAGE_NAME_Debug=blackjack.tar
-CND_PACKAGE_PATH_Debug=dist/Debug/GNU-Linux/package/blackjack.tar
+CND_PACKAGE_NAME_Debug=blackjack-final.tar
+CND_PACKAGE_PATH_Debug=dist/Debug/GNU-Linux/package/blackjack-final.tar
 # Release configuration
 CND_PLATFORM_Release=GNU-Linux
 CND_ARTIFACT_DIR_Release=dist/Release/GNU-Linux
-CND_ARTIFACT_NAME_Release=blackjack
-CND_ARTIFACT_PATH_Release=dist/Release/GNU-Linux/blackjack
+CND_ARTIFACT_NAME_Release=blackjack-final
+CND_ARTIFACT_PATH_Release=dist/Release/GNU-Linux/blackjack-final
 CND_PACKAGE_DIR_Release=dist/Release/GNU-Linux/package
-CND_PACKAGE_NAME_Release=blackjack.tar
-CND_PACKAGE_PATH_Release=dist/Release/GNU-Linux/package/blackjack.tar
+CND_PACKAGE_NAME_Release=blackjack-final.tar
+CND_PACKAGE_PATH_Release=dist/Release/GNU-Linux/package/blackjack-final.tar
 #
 # include compiler specific variables
 #
