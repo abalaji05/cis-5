@@ -45,6 +45,7 @@ void exitMsg(const string& msg); // Exit function with a message
 void bubbleSort(vector<Player>&); // Bubble sort for player scores
 void selectionSort(vector<Player>&); // Selection sort for player winnings
 int linearSearch(const vector<string>&, const string&); // Linear search for player names
+int getCard(int mplier); // Overloaded function to get a random card value with a mplier
 
 // Execution Begins Here!
 int main() {
@@ -253,8 +254,12 @@ int main() {
     return 0;
 }
 
+// Static variable to count number of cards dealt
+static int cardCount = 0;
+
 // Get a random card value
 int getCard() {
+    cardCount++;
     // get a random card
     int card = rand() % 13 + 1;
 
@@ -265,6 +270,17 @@ int getCard() {
     if (card == 1) return 11;
 
     // return card value otherwise
+    return card;
+}
+
+// Overloaded function to get a random card value with a mplier
+int getCard(int mplier) {
+    cardCount++;
+    int card = (rand() % 13 + 1) * mplier;
+
+    if (card > 10 * mplier) return 10 * mplier;
+    if (card == 1 * mplier) return 11 * mplier;
+
     return card;
 }
 
