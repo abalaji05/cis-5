@@ -49,21 +49,21 @@ int linearSearch(const vector<string>&, const string&); // Linear search for pla
 // Execution Begins Here!
 int main() {
     // Declare Variables
-    int numPlyrs;
+    int nPlyrs;
     vector<string> pNames;  // Declare vector without initializing size
-    int plyrBts[MAX_PLAYERS];
-    int plyrBlns[MAX_PLAYERS] = {0}; // Player balances initialized to 0
-    int ttlWngs[MAX_PLAYERS + 1] = {0}; // Total wnngs (last index for dealer)
-    vector<string> winners(MAX_PLAYERS + 1); // Names of winners
+    int pBets[MAX_PLAYERS];
+    int pBlns[MAX_PLAYERS] = {0}; // Player balances initialized to 0
+    int tWngs[MAX_PLAYERS + 1] = {0}; // Total wnngs (last index for dealer)
+    vector<string> winnrs(MAX_PLAYERS + 1); // Names of winners
 
-    int plyrTls[MAX_PLAYERS + 1] = {0}; // +1 for the dealer
-    int dlrTtl;
+    int pTotals[MAX_PLAYERS + 1] = {0}; // +1 for the dealer
+    int dTotal;
 
-    int dlrCrd1, dlrCrd2;
-    string dlrSut1, dlrSut2;
+    int dCard1, dCard2;
+    string dSuit1, dSuit2;
     
     int hands[MAX_PLAYERS + 1][MAX_CARDS] = {0}; // +1 for the dealer
-    vector<string> handSuits(MAX_PLAYERS + 1);
+    vector<string> hSuits; // Vector for hand suits based on number of players
 
     srand(static_cast<unsigned int>(time(0)));
 
@@ -74,63 +74,64 @@ int main() {
 
     while (true) {
         cout << "Enter number of players (1-8): ";
-        cin >> numPlyrs;
+        cin >> nPlyrs;
         
         // Check if the input is an integer
         if (cin.fail()) {
             cin.clear();
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
             cout << "Invalid input. Please enter a number between 1 and 8." << endl;
-        } else if (numPlyrs < MIN_PLAYERS || numPlyrs > MAX_PLAYERS) {
+        } else if (nPlyrs < MIN_PLAYERS || nPlyrs > MAX_PLAYERS) {
             cout << "Invalid number of players. Enter a number between 1 and 8." << endl;
         } else {
             break;  // Valid input
         }
     }
     
-    pNames.resize(numPlyrs);  // Resize vector to the number of players
-    vector<Player> players(numPlyrs);  // Vector of Player structures
+    pNames.resize(nPlyrs);  // Resize vector to the number of players
+    vector<Player> players(nPlyrs);  // Vector of Player structures
+    hSuits.resize(nPlyrs + 1); // Resize handSuits for the number of players and one for the dealer
 
-    for (int i = 0; i < numPlyrs; ++i) {
+    for (int i = 0; i < nPlyrs; ++i) {
         cout << "Enter player " << i + 1 << "'s name: ";
         cin.ignore();
         getline(cin, pNames[i]);
         players[i].name = pNames[i];
         cout << "Enter bet amount for " << pNames[i] << ": ";
-        cin >> plyrBts[i];
-        valBet(plyrBts[i]);
+        cin >> pBets[i];
+        valBet(pBets[i]);
     }
     
-    for (int i = 0; i < numPlyrs; ++i) {
+    for (int i = 0; i < nPlyrs; ++i) {
         // Deal two cards to each player
         for (int j = 0; j < 2; ++j) {
             int crd = getCard();
             string sut = getSuit();
            
-            updHand(hands, plyrTls, i, j, crd, handSuits, sut);
+            updHand(hands, pTotals, i, j, crd, hSuits, sut);
         }
-        players[i].total = plyrTls[i];
-        cout << pNames[i] << "'s Hand : " << handSuits[i] << endl;
+        players[i].total = pTotals[i];
+        cout << pNames[i] << "'s Hand: " << hSuits[i] << endl;
     }
 
     // Initial card dealing for the dealer
-    dlrCrd1 = getCard();
-    dlrSut1 = getSuit();
-    updHand(hands, plyrTls, numPlyrs, 0, dlrCrd1, handSuits, dlrSut1);
+    dCard1 = getCard();
+    dSuit1 = getSuit();
+    updHand(hands, pTotals, nPlyrs, 0, dCard1, hSuits, dSuit1);
 
-    dlrCrd2 = getCard();
-    dlrSut2 = getSuit();
-    updHand(hands, plyrTls, numPlyrs, 1, dlrCrd2, handSuits, dlrSut2);
+    dCard2 = getCard();
+    dSuit2 = getSuit();
+    updHand(hands, pTotals, nPlyrs, 1, dCard2, hSuits, dSuit2);
 
-    dlrTtl = dlrCrd1 + dlrCrd2;
-    cout << "Dealer's Hand: " << handSuits[numPlyrs] << endl;
+    dTotal = dCard1 + dCard2;
+    cout << "Dealer's Hand: " << hSuits[nPlyrs] << endl;
 
     // Player's Turn: Each player can hit or stand
-    for (int i = 0; i < numPlyrs; ++i) {
+    for (int i = 0; i < nPlyrs; ++i) {
         char choice;
         int cardIndex = 2;
         do {
-            cout << pNames[i] << "'s total: " << plyrTls[i] << endl;
+            cout << pNames[i] << "'s total: " << pTotals[i] << endl;
             cout << "Do you want to hit (h/H) or stand (s/S)? ";
             cin >> choice;
             valInput(choice);
@@ -138,93 +139,89 @@ int main() {
             if (choice == 'h' || choice == 'H') {
                 int newCrd = getCard();
                 string newSut = getSuit();
-                updHand(hands, plyrTls, i, cardIndex, newCrd, handSuits, newSut);
-                cardIndex++;
-                cout << "You got " << newCrd << " of " << newSut << endl;
+                if (cardIndex < MAX_CARDS) {
+                    updHand(hands, pTotals, i, cardIndex, newCrd, hSuits, newSut);
+                    cardIndex++;
+                    cout << "You got " << newCrd << " of " << newSut << endl;
+                } else {
+                    cout << "Maximum cards reached for " << pNames[i] << endl;
+                    break;
+                }
 
-                if (plyrTls[i] > MAX_SCORE) {
-                    cout << pNames[i] << " busts with total: " << plyrTls[i] << endl;
+                if (pTotals[i] > MAX_SCORE) {
+                    cout << pNames[i] << " busts with total: " << pTotals[i] << endl;
                     break;
                 }
             }
         } while (choice == 'h' || choice == 'H');
-        players[i].total = plyrTls[i];
+        players[i].total = pTotals[i];
     }
 
     // Dealer's Turn: Dealer hits until reaching DEALER_LIMIT
-    int dealerCardIndex = 2;
-    while (dlrTtl < DEALER_LIMIT) {
+    int dCrdIdx = 2;
+    while (dTotal < DEALER_LIMIT && dCrdIdx < MAX_CARDS) {
         int newCrd = getCard();
         string newSut = getSuit();
-        dlrTtl += newCrd;
+        dTotal += newCrd;
         cout << "Dealer got " << newCrd << " of " << newSut << endl;
-        updHand(hands, plyrTls, numPlyrs, dealerCardIndex, newCrd, handSuits, newSut);
-        dealerCardIndex++;
+        updHand(hands, pTotals, nPlyrs, dCrdIdx, newCrd, hSuits, newSut);
+        dCrdIdx++;
     }
 
-    cout << "Dealer's total: " << dlrTtl << endl;
+    cout << "Dealer's total: " << dTotal << endl;
 
-    string bstPlyr = "";
-    int bstTotl = 0;
+    string bPlyr = "";
+    int bTotal = 0;
 
     // Determine winners
-    for (int i = 0; i < numPlyrs; ++i) {
-        int plyrDif = abs(plyrTls[i] - MAX_SCORE);
-        int dlrDif = abs(dlrTtl - MAX_SCORE);
-
-        if (plyrTls[i] > MAX_SCORE) {
+    for (int i = 0; i < nPlyrs; ++i) {
+        if (pTotals[i] > MAX_SCORE) {
             cout << pNames[i] << " busts and cannot win!" << endl;
-            ttlWngs[numPlyrs] += plyrBts[i]; // Dealer wins the bet
-            winners[numPlyrs] = "Dealer";
-        } 
-
-        else if (dlrTtl > MAX_SCORE || plyrTls[i] > dlrTtl) {
+            tWngs[nPlyrs] += pBets[i];
+            winnrs[nPlyrs] = "Dealer";
+        } else if (dTotal > MAX_SCORE || pTotals[i] > dTotal) {
             cout << pNames[i] << " wins!" << endl;
-            recWin(outFile, pNames, hands, plyrTls, i, pNames[i]);
-            ttlWngs[i] += plyrBts[i] * (numPlyrs + 1); // Player gains bets from all players and dealer
-            plyrBlns[i] += plyrBts[i] * numPlyrs; // Calculate player balance after win
-            winners[i] = pNames[i];
-            players[i].wnngs = plyrBts[i] * (numPlyrs + 1);
+            recWin(outFile, pNames, hands, pTotals, i, pNames[i]);
+            tWngs[i] += pBets[i] * (nPlyrs + 1);
+            pBlns[i] += pBets[i] * nPlyrs;
+            winnrs[i] = pNames[i];
+            players[i].wnngs = pBets[i] * (nPlyrs + 1);
 
-            if (plyrTls[i] > bstTotl) {
-                bstTotl = plyrTls[i];
-                bstPlyr = pNames[i];
+            if (pTotals[i] > bTotal) {
+                bTotal = pTotals[i];
+                bPlyr = pNames[i];
             }
-        } 
-
-        else if (dlrTtl > plyrTls[i]) {
+        } else if (dTotal > pTotals[i]) {
             cout << "Dealer wins against " << pNames[i] << "!" << endl;
-            recWin(outFile, pNames, hands, plyrTls, i, "Dealer");
-            ttlWngs[numPlyrs] += plyrBts[i]; // Dealer wins the bet
-            winners[numPlyrs] = "Dealer";
-        } 
-
-        else {
+            recWin(outFile, pNames, hands, pTotals, i, "Dealer");
+            tWngs[nPlyrs] += pBets[i];
+            winnrs[nPlyrs] = "Dealer";
+        } else {
             cout << "It's a tie for " << pNames[i] << "!" << endl;
-            recWin(outFile, pNames, hands, plyrTls, i, "Tie");
-            winners[i] = pNames[i];
+            recWin(outFile, pNames, hands, pTotals, i, "Tie");
+            winnrs[i] = pNames[i];
         }
 
-        if (bstTotl > 0)
-            cout << "Best Player : " << bstPlyr << " Score :" << bstTotl << endl;
+        if (bTotal > 0)
+            cout << "Best Player: " << bPlyr << " Score: " << bTotal << endl;
     }
 
     // Record dealer's final hand
-    recWin(outFile, pNames, hands, plyrTls, numPlyrs, "Dealer");
+    recWin(outFile, pNames, hands, pTotals, nPlyrs, "Dealer");
 
     // Close the card.dat file
     outFile.close();
 
     // Show Leaderboard
-    showLead(players, numPlyrs);
+    showLead(players, nPlyrs);
 
     // Sort player totals using bubble sort
     bubbleSort(players);
 
     // Display sorted player totals
     cout << "\nSorted Player Totals (Bubble Sort):" << endl;
-    for (int i = 0; i < numPlyrs; ++i) {
-        cout << players[i].name << "'s total: " << players[i].total << endl;
+    for (int i = 0; i < nPlyrs; ++i) {
+        cout << players[i].name << ": " << players[i].total << endl;
     }
 
     // Sort player wnngs using selection sort
@@ -232,13 +229,13 @@ int main() {
 
     // Display sorted wnngs
     cout << "\nSorted Player Winnings (Selection Sort):" << endl;
-    for (int i = 0; i < numPlyrs; ++i) {
+    for (int i = 0; i < nPlyrs; ++i) {
         cout << players[i].name << ": " << players[i].wnngs << " points" << endl;
     }
 
     // Display player balances
-    for (int i = 0; i < numPlyrs; ++i) {
-        cout << pNames[i] << "'s balance: " << plyrBlns[i] << endl;
+    for (int i = 0; i < nPlyrs; ++i) {
+        cout << pNames[i] << "'s balance: " << pBlns[i] << endl;
     }
     // Search for a player by name
     string srchNm;
@@ -248,9 +245,8 @@ int main() {
     int srchIdx = linearSearch(pNames, srchNm);
 
     if (srchIdx != -1) {
-        cout << srchNm << " found with total: " << plyrTls[srchIdx] << endl;
-    } 
-    else {
+        cout << srchNm << " found with total: " << pTotals[srchIdx] << endl;
+    } else {
         cout << srchNm << " not found." << endl;
     }
 
@@ -291,10 +287,10 @@ void updFile(ofstream &file, const string &plyr, int val, const string &suit) {
 }
 
 // Record the winner in the file
-void recWin(ofstream &file, const vector<string> &pNames, int hands[][MAX_CARDS], int plyrTls[], int idx, const string &wnr) {
+void recWin(ofstream &file, const vector<string> &pNames, int hands[][MAX_CARDS], int pTotals[], int idx, const string &wnr) {
     if (file.is_open()) {
         // Write the accumulated hand for the player or dealer
-        if (idx < MAX_PLAYERS) {
+        if (idx < pNames.size()) {
             file << pNames[idx] << ": ";
         } else {
             file << "Dealer: ";
@@ -305,11 +301,11 @@ void recWin(ofstream &file, const vector<string> &pNames, int hands[][MAX_CARDS]
             file << hands[idx][i] << " ";
         }
 
-        file << "\nTotal: " << plyrTls[idx] << endl;
+        file << "\nTotal: " << pTotals[idx] << endl;
         file << "Winner: " << wnr << endl;
     } else {
         ofstream outFile("card.dat", ios::app);
-        if (idx < MAX_PLAYERS) {
+        if (idx < pNames.size()) {
             outFile << pNames[idx] << ": ";
         } else {
             outFile << "Dealer: ";
@@ -320,7 +316,7 @@ void recWin(ofstream &file, const vector<string> &pNames, int hands[][MAX_CARDS]
             outFile << hands[idx][i] << " ";
         }
 
-        outFile << "\nTotal: " << plyrTls[idx] << endl;
+        outFile << "\nTotal: " << pTotals[idx] << endl;
         outFile << "Winner: " << wnr << endl;
         outFile.close();
     }
@@ -337,18 +333,18 @@ void valInput(char &choice) {
 }
 
 // Update hands in array
-void updHand(int hands[][MAX_CARDS], int plyrTls[], int idx, int cardIdx, int crd, vector<string> &handSuits, const string &suit) {
+void updHand(int hands[][MAX_CARDS], int pTotals[], int idx, int cardIdx, int crd, vector<string> &hSuits, const string &suit) {
     if (idx >= MAX_PLAYERS + 1 || cardIdx >= MAX_CARDS) {
         cout << "Index out of bounds. Skipping hand update." << endl;
         return;
     }
     hands[idx][cardIdx] = crd;
-    plyrTls[idx] += crd;
+    pTotals[idx] += crd;
 
-    if (handSuits[idx].empty()) {
-        handSuits[idx] = to_string(crd) + " of " + suit;
+    if (hSuits[idx].empty()) {
+        hSuits[idx] = to_string(crd) + " of " + suit;
     } else {
-        handSuits[idx] += ", " + to_string(crd) + " of " + suit;
+        hSuits[idx] += ", " + to_string(crd) + " of " + suit;
     }
 }
 
@@ -363,9 +359,9 @@ void valBet(int &bet) {
 }
 
 // Display the leaderboard
-void showLead(const vector<Player> &players, int numPlyrs) {
+void showLead(const vector<Player> &players, int nPlyrs) {
     cout << "\nLeaderboard:" << endl;
-    for (int i = 0; i < numPlyrs; ++i) {
+    for (int i = 0; i < nPlyrs; ++i) {
         if (!players[i].name.empty()) {
             cout << players[i].name << ": " << players[i].wnngs << " points" << endl;
         }
@@ -414,4 +410,3 @@ int linearSearch(const vector<string> &names, const string &target) {
     }
     return -1; // Not found
 }
-  
